@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BarVision — Your Bar. Unlocked.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Bebas+Neue&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --amber:       #C8883A;
+      --amber-light: #E8A84A;
+      --amber-glow:  #F5C97A;
+      --mahogany:    #1A0A02;
+      --dark:        #0D0603;
+      --mid:         #2A1208;
+      --surface:     #1E0E05;
+      --text:        #F5EDD8;
+      --text-muted:  #C4A882;
+      --text-dim:    #8A6A4A;
+      --glass:       rgba(200,136,58,0.06);
+      --glass-border:rgba(200,136,58,0.18);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom cursor */
+    .cursor {
+      position: fixed;
+      width: 10px; height: 10px;
+      background: var(--amber);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s ease, width 0.2s ease, height 0.2s ease, opacity 0.2s ease;
+      mix-blend-mode: screen;
+    }
+    .cursor-ring {
+      position: fixed;
+      width: 36px; height: 36px;
+      border: 1px solid rgba(200,136,58,0.5);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: transform 0.15s ease, width 0.3s ease, height 0.3s ease;
+    }
+
+    /* Noise overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.35;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 500;
+      padding: 24px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(to bottom, rgba(13,6,3,0.95), transparent);
+    }
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 0.12em;
+      color: var(--amber);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--text); }
+    .nav-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--amber);
+      border: 1px solid var(--glass-border);
+      padding: 6px 14px;
+      text-transform: uppercase;
+      background: var(--glass);
+      backdrop-filter: blur(8px);
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      overflow: hidden;
+    }
+
+    /* Radial amber glow behind hero */
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px; height: 800px;
+      background: radial-gradient(ellipse, rgba(200,136,58,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Animated bottle scan lines */
+    .scan-frame {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(500px, 90vw);
+      height: min(500px, 90vw);
+      pointer-events: none;
+    }
+    .scan-frame::before,
+    .scan-frame::after {
+      content: '';
+      position: absolute;
+      border-color: var(--amber);
+      border-style: solid;
+      width: 40px; height: 40px;
+    }
+    .scan-frame::before {
+      top: 0; left: 0;
+      border-width: 2px 0 0 2px;
+      animation: corner-pulse 3s ease-in-out infinite;
+    }
+    .scan-frame::after {
+      bottom: 0; right: 0;
+      border-width: 0 2px 2px 0;
+      animation: corner-pulse 3s ease-in-out infinite 0.5s;
+    }
+    .scan-frame-br, .scan-frame-tl {
+      position: absolute;
+      width: 40px; height: 40px;
+      border-color: var(--amber);
+      border-style: solid;
+    }
+    .scan-frame-br {
+      bottom: 0; left: 0;
+      border-width: 0 0 2px 2px;
+      animation: corner-pulse 3s ease-in-out infinite 1s;
+    }
+    .scan-frame-tl {
+      top: 0; right: 0;
+      border-width: 2px 2px 0 0;
+      animation: corner-pulse 3s ease-in-out infinite 1.5s;
+    }
+    @keyframes corner-pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    /* Scanning line */
+    .scan-line {
+      position: absolute;
+      left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--amber-glow), transparent);
+      box-shadow: 0 0 12px 2px rgba(200,136,58,0.4);
+      animation: scan 4s ease-in-out infinite;
+      top: 10%;
+    }
+    @keyframes scan {
+      0%   { top: 10%; opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { top: 90%; opacity: 0; }
+    }
+
+    /* Bottle silhouettes */
+    .bottles-bg {
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      opacity: 0.07;
+      pointer-events: none;
+    }
+    .bottle {
+      background: var(--amber);
+      border-radius: 4px 4px 0 0;
+      animation: bottle-glow 4s ease-in-out infinite;
+    }
+    .bottle:nth-child(1)  { width:28px; height:160px; animation-delay:0s; }
+    .bottle:nth-child(2)  { width:22px; height:200px; animation-delay:0.3s; }
+    .bottle:nth-child(3)  { width:32px; height:180px; animation-delay:0.6s; }
+    .bottle:nth-child(4)  { width:24px; height:220px; animation-delay:0.9s; }
+    .bottle:nth-child(5)  { width:28px; height:170px; animation-delay:1.2s; }
+    .bottle:nth-child(6)  { width:20px; height:190px; animation-delay:1.5s; }
+    .bottle:nth-child(7)  { width:30px; height:160px; animation-delay:1.8s; }
+    .bottle:nth-child(8)  { width:26px; height:210px; animation-delay:2.1s; }
+    .bottle:nth-child(9)  { width:22px; height:175px; animation-delay:2.4s; }
+    .bottle:nth-child(10) { width:34px; height:195px; animation-delay:2.7s; }
+    .bottle:nth-child(11) { width:24px; height:165px; animation-delay:3.0s; }
+    .bottle:nth-child(12) { width:28px; height:205px; animation-delay:3.3s; }
+    @keyframes bottle-glow {
+      0%, 100% { opacity: 0.07; }
+      50% { opacity: 0.18; }
+    }
+
+    .hero-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.35em;
+      color: var(--amber);
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fade-up 0.8s ease forwards 0.3s;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(5rem, 14vw, 11rem);
+      line-height: 0.9;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      position: relative;
+      z-index: 2;
+      opacity: 0;
+      animation: fade-up 0.8s ease forwards 0.5s;
+    }
+    .hero-title .accent {
+      color: var(--amber);
+      display: block;
+    }
+
+    .hero-sub {
+      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      font-style: italic;
+      font-weight: 300;
+      color: var(--text-muted);
+      margin-top: 24px;
+      max-width: 520px;
+      line-height: 1.5;
+      position: relative;
+      z-index: 2;
+      opacity: 0;
+      animation: fade-up 0.8s ease forwards 0.7s;
+    }
+
+    .hero-cta {
+      margin-top: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+      z-index: 2;
+      opacity: 0;
+      animation: fade-up 0.8s ease forwards 1s;
+    }
+
+    .email-form {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--glass-border);
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+    }
+    .email-form input {
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 14px 20px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text);
+      width: 260px;
+      letter-spacing: 0.05em;
+    }
+    .email-form input::placeholder { color: var(--text-dim); }
+    .email-form button {
+      background: var(--amber);
+      border: none;
+      padding: 14px 24px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 0.12em;
+      color: var(--dark);
+      cursor: none;
+      transition: background 0.2s ease;
+    }
+    .email-form button:hover { background: var(--amber-glow); }
+
+    .notify-note {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+    }
+
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── DIVIDER ─── */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--glass-border), transparent);
+      margin: 0 auto;
+    }
+
+    /* ─── FEATURES ─── */
+    .features {
+      padding: 120px 48px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      color: var(--amber);
+      text-transform: uppercase;
+      margin-bottom: 60px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--glass-border);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2px;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      padding: 48px 36px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s ease;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--amber);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+    .feature-card:hover { background: var(--mid); }
+    .feature-card:hover::before { transform: scaleX(1); }
+
+    .feature-number {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 4rem;
+      color: var(--text-dim);
+      line-height: 1;
+      margin-bottom: 24px;
+      transition: color 0.3s ease;
+    }
+    .feature-card:hover .feature-number { color: var(--amber); }
+
+    .feature-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
+      letter-spacing: 0.02em;
+    }
+
+    .feature-desc {
+      font-size: 1rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ─── HOW IT WORKS ─── */
+    .how {
+      padding: 80px 48px 120px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .how-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 0;
+    }
+
+    .how-step {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 32px;
+      padding: 48px 0;
+      border-bottom: 1px solid var(--glass-border);
+      position: relative;
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .how-step.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .step-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3.5rem;
+      color: var(--amber);
+      line-height: 1;
+      padding-top: 4px;
+    }
+
+    .step-content {}
+    .step-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .step-desc {
+      font-size: 1rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+    .step-tag {
+      display: inline-block;
+      margin-top: 14px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--amber);
+      border: 1px solid var(--glass-border);
+      padding: 4px 10px;
+      background: var(--glass);
+    }
+
+    /* ─── QUOTE / PHILOSOPHY ─── */
+    .philosophy {
+      padding: 100px 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .philosophy::before {
+      content: '"';
+      position: absolute;
+      top: -40px; left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 30rem;
+      color: rgba(200,136,58,0.03);
+      line-height: 1;
+      pointer-events: none;
+    }
+    .philosophy blockquote {
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      font-style: italic;
+      font-weight: 300;
+      color: var(--text);
+      max-width: 780px;
+      margin: 0 auto;
+      line-height: 1.5;
+      position: relative;
+      z-index: 1;
+    }
+    .philosophy cite {
+      display: block;
+      margin-top: 24px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      font-style: normal;
+      letter-spacing: 0.25em;
+      color: var(--amber);
+      text-transform: uppercase;
+    }
+
+    /* ─── COMING SOON BAR ─── */
+    .coming-soon {
+      background: var(--surface);
+      border-top: 1px solid var(--glass-border);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 80px 48px;
+      text-align: center;
+    }
+    .coming-soon-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3rem, 8vw, 6rem);
+      letter-spacing: 0.08em;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .coming-soon-title span { color: var(--amber); }
+    .coming-soon-sub {
+      font-size: 1.1rem;
+      font-style: italic;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+    }
+
+    .platform-badges {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .platform-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      border: 1px solid var(--glass-border);
+      padding: 10px 20px;
+      text-transform: uppercase;
+      background: var(--glass);
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      padding: 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem;
+      letter-spacing: 0.12em;
+      color: var(--amber);
+    }
+    .footer-logo span { color: var(--text-dim); }
+    .footer-copy {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+      text-align: right;
+    }
+
+    /* ─── TICKER ─── */
+    .ticker-wrap {
+      overflow: hidden;
+      border-top: 1px solid var(--glass-border);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 14px 0;
+      background: var(--mahogany);
+    }
+    .ticker {
+      display: flex;
+      gap: 0;
+      animation: ticker 30s linear infinite;
+      width: max-content;
+    }
+    .ticker-item {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      color: var(--text-dim);
+      padding: 0 40px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .ticker-item span { color: var(--amber); margin-right: 8px; }
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 640px) {
+      nav { padding: 20px 24px; }
+      .features, .how, .philosophy, .coming-soon, footer { padding-left: 24px; padding-right: 24px; }
+      footer { flex-direction: column; align-items: flex-start; }
+      .footer-copy { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo">Bar<span>Vision</span></a>
+    <div class="nav-badge">Coming Soon</div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="scan-frame">
+      <div class="scan-frame-br"></div>
+      <div class="scan-frame-tl"></div>
+      <div class="scan-line"></div>
+    </div>
+
+    <div class="bottles-bg">
+      <div class="bottle"></div><div class="bottle"></div>
+      <div class="bottle"></div><div class="bottle"></div>
+      <div class="bottle"></div><div class="bottle"></div>
+      <div class="bottle"></div><div class="bottle"></div>
+      <div class="bottle"></div><div class="bottle"></div>
+      <div class="bottle"></div><div class="bottle"></div>
+    </div>
+
+    <p class="hero-eyebrow">Point. Scan. Pour.</p>
+
+    <h1 class="hero-title">
+      Bar<span class="accent">Vision</span>
+    </h1>
+
+    <p class="hero-sub">
+      Scan your shelf. Know your bar.<br />
+      Every bottle recognized. Every cocktail unlocked.
+    </p>
+
+    <div class="hero-cta">
+      <p class="notify-note">Coming soon to iOS &nbsp;·&nbsp; Stay tuned.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- TICKER -->
+  <div class="ticker-wrap">
+    <div class="ticker">
+      <div class="ticker-item"><span>◆</span>AI Bottle Recognition</div>
+      <div class="ticker-item"><span>◆</span>Real-Time Inventory</div>
+      <div class="ticker-item"><span>◆</span>600+ Cocktail Recipes</div>
+      <div class="ticker-item"><span>◆</span>One Bottle Away</div>
+      <div class="ticker-item"><span>◆</span>Guided Make Mode</div>
+      <div class="ticker-item"><span>◆</span>Gap Analysis</div>
+      <div class="ticker-item"><span>◆</span>Substitution Engine</div>
+      <div class="ticker-item"><span>◆</span>Video Pan Scanning</div>
+      <!-- duplicate for seamless loop -->
+      <div class="ticker-item"><span>◆</span>AI Bottle Recognition</div>
+      <div class="ticker-item"><span>◆</span>Real-Time Inventory</div>
+      <div class="ticker-item"><span>◆</span>600+ Cocktail Recipes</div>
+      <div class="ticker-item"><span>◆</span>One Bottle Away</div>
+      <div class="ticker-item"><span>◆</span>Guided Make Mode</div>
+      <div class="ticker-item"><span>◆</span>Gap Analysis</div>
+      <div class="ticker-item"><span>◆</span>Substitution Engine</div>
+      <div class="ticker-item"><span>◆</span>Video Pan Scanning</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <p class="section-label">What BarVision Does</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-number">01</div>
+        <h3 class="feature-title">Shelf Scan</h3>
+        <p class="feature-desc">Point your camera at your bar. BarVision identifies every bottle — brand, spirit category, fill level — in seconds. No typing. No searching.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">02</div>
+        <h3 class="feature-title">Make Now</h3>
+        <p class="feature-desc">Instantly see every cocktail you can make with exactly what you have. Filtered, ranked, and ready to pour.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">03</div>
+        <h3 class="feature-title">One Bottle Away</h3>
+        <p class="feature-desc">See which recipes you're missing just one ingredient for. Know exactly what to buy to unlock the most new drinks.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">04</div>
+        <h3 class="feature-title">Guided Make Mode</h3>
+        <p class="feature-desc">Step-by-step instructions with technique cues, timers, and scaled measurements. From novice to confident home bartender.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">05</div>
+        <h3 class="feature-title">Smart Substitutions</h3>
+        <p class="feature-desc">Missing an ingredient? BarVision reasons about your shelf and suggests the best substitute, so nothing stops the pour.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">06</div>
+        <h3 class="feature-title">Gap Analysis</h3>
+        <p class="feature-desc">A ranked list of the single bottles that would unlock the most new recipes. The smartest shopping list your bar has ever had.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- HOW IT WORKS -->
+  <section class="how">
+    <p class="section-label">How It Works</p>
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3 class="step-title">Scan Your Shelf</h3>
+          <p class="step-desc">Open BarVision and point your iPhone at your spirits collection. Tap once to capture, or use pan mode to slowly sweep across a wide shelf. The AI reads every label.</p>
+          <span class="step-tag">Computer Vision · GPT-4o</span>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3 class="step-title">Confirm Your Inventory</h3>
+          <p class="step-desc">Review the detected bottles, correct anything the camera missed, and mark fill levels. Your inventory lives privately on your device — no cloud storage of your data.</p>
+          <span class="step-tag">On-Device Storage · Private by Design</span>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3 class="step-title">See What You Can Make</h3>
+          <p class="step-desc">Instantly browse the full list of cocktails you can make right now, what you're one bottle away from, and smart suggestions for what to buy next.</p>
+          <span class="step-tag">600+ Recipes · Offline Matching</span>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h3 class="step-title">Pour With Confidence</h3>
+          <p class="step-desc">Tap any recipe for guided make mode. Follow each step with technique cues, built-in timers, and measurements that scale to your serving size.</p>
+          <span class="step-tag">Step-by-Step · Batch Scaling</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHILOSOPHY -->
+  <section class="philosophy">
+    <blockquote>
+      "Every great home bar starts with knowing what you have.<br />
+      Most apps make you type it in. We just let you look."
+    </blockquote>
+    <cite>— The BarVision Idea</cite>
+  </section>
+
+  <!-- COMING SOON -->
+  <section class="coming-soon">
+    <h2 class="coming-soon-title">Coming to <span>iOS</span></h2>
+    <p class="coming-soon-sub">Built for the home bartender who takes it seriously.</p>
+    <div class="platform-badges">
+      <div class="platform-badge">iPhone</div>
+      <div class="platform-badge">iOS 17+</div>
+      <div class="platform-badge">On-Device Privacy</div>
+      <div class="platform-badge">No Subscription to Start</div>
+    </div>
+  </section>
+
+  <!-- TICKER 2 -->
+  <div class="ticker-wrap">
+    <div class="ticker" style="animation-direction: reverse;">
+      <div class="ticker-item"><span>◆</span>Negroni</div>
+      <div class="ticker-item"><span>◆</span>Old Fashioned</div>
+      <div class="ticker-item"><span>◆</span>Penicillin</div>
+      <div class="ticker-item"><span>◆</span>Daiquiri</div>
+      <div class="ticker-item"><span>◆</span>Manhattan</div>
+      <div class="ticker-item"><span>◆</span>Espresso Martini</div>
+      <div class="ticker-item"><span>◆</span>Last Word</div>
+      <div class="ticker-item"><span>◆</span>Paper Plane</div>
+      <div class="ticker-item"><span>◆</span>Paloma</div>
+      <div class="ticker-item"><span>◆</span>Vieux Carré</div>
+      <div class="ticker-item"><span>◆</span>Negroni</div>
+      <div class="ticker-item"><span>◆</span>Old Fashioned</div>
+      <div class="ticker-item"><span>◆</span>Penicillin</div>
+      <div class="ticker-item"><span>◆</span>Daiquiri</div>
+      <div class="ticker-item"><span>◆</span>Manhattan</div>
+      <div class="ticker-item"><span>◆</span>Espresso Martini</div>
+      <div class="ticker-item"><span>◆</span>Last Word</div>
+      <div class="ticker-item"><span>◆</span>Paper Plane</div>
+      <div class="ticker-item"><span>◆</span>Paloma</div>
+      <div class="ticker-item"><span>◆</span>Vieux Carré</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">Bar<span>Vision</span></div>
+    <div class="footer-copy">
+      © 2026 Chris MacLellan &nbsp;·&nbsp; All rights reserved<br />
+      iOS app in development
+    </div>
+  </footer>
+
+  <script>
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = mx + 'px';
+      cursor.style.top  = my + 'px';
+    });
+
+    function animRing() {
+      rx += (mx - rx) * 0.12;
+      ry += (my - ry) * 0.12;
+      ring.style.left = rx + 'px';
+      ring.style.top  = ry + 'px';
+      requestAnimationFrame(animRing);
+    }
+    animRing();
+
+    document.querySelectorAll('button, a, input').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        cursor.style.width = '18px';
+        cursor.style.height = '18px';
+        ring.style.width = '54px';
+        ring.style.height = '54px';
+      });
+      el.addEventListener('mouseleave', () => {
+        cursor.style.width = '10px';
+        cursor.style.height = '10px';
+        ring.style.width = '36px';
+        ring.style.height = '36px';
+      });
+    });
+
+    // Intersection observer for step animations
+    const steps = document.querySelectorAll('.how-step');
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 120);
+        }
+      });
+    }, { threshold: 0.15 });
+    steps.forEach(s => obs.observe(s));
+  </script>
+</body>
+</html>
